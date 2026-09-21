@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feed — TravelShare</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .post-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .action-bar {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            align-items: center;
+        }
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: #555;
+            transition: background 0.2s;
+        }
+        .action-btn:hover   { background: #f0f0f0; }
+        .action-btn.liked   { color: #e53e3e; }
+        .action-btn.following { color: #2f855a; }
+        #post-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        #modal-content {
+            background: white;
+            max-width: 700px;
+            margin: 40px auto;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        #modal-content img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .modal-info { padding: 20px 24px; }
+        .modal-action-bar {
+            display: flex;
+            gap: 16px;
+            margin: 12px 0;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/home.html" class="nav-brand">Velora</a>
+        <div class="nav-motto">New sanctuaries await</div>
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">Feed</a>
+        <a href="/create_post.html">Share Trip</a>
+        <a href="/budget.html">Budget</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/search.html">Search</a>
+        <a href="/trip-planner.html">Plan Trip</a>
+        <a href="/map.html">Map</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Travel Feed</h2>
+    <div id="posts"></div>
+</div>
+
+<!-- Post Detail Modal -->
+<div id="post-modal" onclick="handleModalClick(event)">
+    <div id="modal-content">
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+<script>
+let currentUserId = null;
+let allPosts      = [];
+let likedPosts    = new Set();
+let followedUsers = new Set();
+
+async function getCurrentUser() {
+    const res = await fetch('/me');
+    if (res.ok) {
+        const data    = await res.json();
+        currentUserId = data.user_id;
+    }
+}
+
+async function getLikes() {
+    try {
+        const res  = await fetch('/my-likes');
+        if (!res.ok) return;
+        const data = await res.json();
+        likedPosts = new Set(data);
+    } catch(e) {
+        console.log('Could not load likes');
+    }
+}
+
+async function getFollowing() {
+    try {
+        const res  = await fetch('/following');
+        if (!res.ok) return;
+        const data = await res.json();
+        followedUsers = new Set(data.map(u => u.id));
+    } catch(e) {
+        console.log('Could not load following list');
+    }
+}
+
+async function loadPosts() {
+    await getCurrentUser();
+    await getLikes();
+    await getFollowing();
+    const res = await fetch('/posts');
+    allPosts  = await res.json();
+    renderPosts();
+}
+
+function renderPosts() {
+    const div = document.getElementById('posts');
+
+    if (allPosts.length === 0) {
+        div.innerHTML = '<p>No posts yet. Be the first to share a trip!</p>';
+        return;
+    }
+
+    div.innerHTML = allPosts.map(p => {
+
+        const photo = p.photo_url
+            ? '<img src="' + p.photo_url + '" onclick="openPost(\'' + p._id + '\')">'
+            : '';
+
+        const budget = p.budget_breakdown && p.budget_breakdown.total
+            ? '<p class="budget">💰 ' + p.budget_breakdown.total + ' ' +
+              (p.budget_breakdown.currency || 'PKR') + '</p>'
+            : '';
+
+        const tags = (p.tags || []).map(t =>
+            '<span class="tag">#' + t + '</span>'
+        ).join('');
+
+        const isLiked    = likedPosts.has(p._id);
+        const isFollowed = followedUsers.has(p.author_id);
+        const isOwn      = p.author_id === currentUserId;
+
+        const likeBtn =
+            '<button class="action-btn ' + (isLiked ? 'liked' : '') + '" ' +
+            'id="like-btn-' + p._id + '" ' +
+            'onclick="toggleLike(\'' + p._id + '\')">' +
+            (isLiked ? '❤️ Liked' : '🤍 Like') +
+            '</button>';
+
+        const followBtn = !isOwn
+            ? '<button class="action-btn ' + (isFollowed ? 'following' : '') + '" ' +
+              'id="follow-btn-' + p.author_id + '" ' +
+              'onclick="toggleFollow(\'' + p.author_id + '\')">' +
+              (isFollowed ? '✅ Following' : '➕ Follow') +
+              '</button>'
+            : '';
+
+        const comments = (p.comments || []).map(c =>
+            '<div class="comment"><strong>' + c.username + ':</strong> ' + c.text + '</div>'
+        ).join('');
+
+        return '<div class="post-card">' +
+            photo +
+            '<div class="post-body">' +
+                '<h3 onclick="openPost(\'' + p._id + '\')" style="cursor:pointer;">' +
+                (p.title || '') + '</h3>' +
+                '<p class="meta">by <strong>' + (p.author_username || '') + '</strong>' +
+                ' — 📍 ' + (p.destination ? p.destination.name + ', ' +
+                p.destination.country : '') + '</p>' +
+                '<p>' + (p.body || '') + '</p>' +
+                budget +
+                '<div class="tags">' + tags + '</div>' +
+            '</div>' +
+            '<div class="action-bar">' + likeBtn + followBtn + '</div>' +
+            '<div style="padding: 0 28px 20px;">' +
+                '<div id="comments-' + p._id + '" style="margin-bottom:10px;">' +
+                comments + '</div>' +
+                '<div style="display:flex; gap:8px;">' +
+                    '<input type="text" id="comment-input-' + p._id + '" ' +
+                    'placeholder="Write a comment..." style="margin-bottom:0; flex:1;">' +
+                    '<button onclick="submitComment(\'' + p._id + '\')" ' +
+                    'style="padding:10px 20px; margin-bottom:0; font-size:0.78rem; ' +
+                    'letter-spacing:1px;">Post</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+
+    }).join('');
+}
+
+async function toggleLike(postId) {
+    const isLiked = likedPosts.has(postId);
+    const btn     = document.getElementById('like-btn-' + postId);
+
+    if (isLiked) {
+        await fetch('/posts/' + postId + '/unlike', { method: 'POST' });
+        likedPosts.delete(postId);
+        btn.textContent = '🤍 Like';
+        btn.classList.remove('liked');
+    } else {
+        await fetch('/posts/' + postId + '/like', { method: 'POST' });
+        likedPosts.add(postId);
+        btn.textContent = '❤️ Liked';
+        btn.classList.add('liked');
+    }
+}
+
+async function toggleFollow(targetId) {
+    const isFollowed = followedUsers.has(targetId);
+    const btn        = document.getElementById('follow-btn-' + targetId);
+
+    if (isFollowed) {
+        await fetch('/unfollow/' + targetId, { method: 'POST' });
+        followedUsers.delete(targetId);
+        btn.textContent = '➕ Follow';
+        btn.classList.remove('following');
+    } else {
+        await fetch('/follow/' + targetId, { method: 'POST' });
+        followedUsers.add(targetId);
+        btn.textContent = '✅ Following';
+        btn.classList.add('following');
+    }
+}
+
+async function submitComment(postId) {
+    const input = document.getElementById('comment-input-' + postId);
+    const text  = input.value.trim();
+    if (!text) return;
+
+    const res = await fetch('/posts/' + postId + '/comment', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ text })
+    });
+
+    if (res.ok) {
+        input.value = '';
+        await loadPosts();
+    }
+}
+
+function openPost(postId) {
+    const p = allPosts.find(x => x._id === postId);
+    if (!p) return;
+
+    const photo = p.photo_url
+        ? '<img src="' + p.photo_url + '">'
+        : '';
+
+    const budget = p.budget_breakdown && p.budget_breakdown.total
+        ? '<p class="budget">💰 Budget: ' + p.budget_breakdown.total + ' ' +
+          (p.budget_breakdown.currency || 'PKR') + '</p>'
+        : '';
+
+    const tags = (p.tags || []).map(t =>
+        '<span class="tag">#' + t + '</span>'
+    ).join('');
+
+    const isLiked    = likedPosts.has(p._id);
+    const isFollowed = followedUsers.has(p.author_id);
+    const isOwn      = p.author_id === currentUserId;
+
+    const likeBtn =
+        '<button class="action-btn ' + (isLiked ? 'liked' : '') + '" ' +
+        'onclick="toggleLike(\'' + p._id + '\'); reopenPost(\'' + p._id + '\')">' +
+        (isLiked ? '❤️ Liked' : '🤍 Like') + '</button>';
+
+    const followBtn = !isOwn
+        ? '<button class="action-btn ' + (isFollowed ? 'following' : '') + '" ' +
+          'onclick="toggleFollow(\'' + p.author_id + '\'); reopenPost(\'' + p._id + '\')">' +
+          (isFollowed ? '✅ Following' : '➕ Follow') + '</button>'
+        : '';
+
+    const comments = (p.comments || []).map(c =>
+        '<div class="comment"><strong>' + c.username + ':</strong> ' + c.text + '</div>'
+    ).join('');
+
+    document.getElementById('modal-body').innerHTML =
+        photo +
+        '<div class="modal-info">' +
+            '<div style="display:flex; justify-content:space-between; align-items:start;">' +
+                '<h2 style="margin-bottom:6px;">' + (p.title || '') + '</h2>' +
+                '<button onclick="closeModal()" style="background:#e53e3e; ' +
+                'padding:6px 12px; font-size:0.85rem; margin-bottom:0;">✕</button>' +
+            '</div>' +
+            '<p class="meta" style="margin-bottom:12px;">by <strong>' +
+            (p.author_username || '') + '</strong> — 📍 ' +
+            (p.destination ? p.destination.name + ', ' + p.destination.country : '') + '</p>' +
+            '<p style="margin-bottom:12px; line-height:1.7;">' + (p.body || '') + '</p>' +
+            budget +
+            '<div class="tags" style="margin:10px 0;">' + tags + '</div>' +
+            '<div class="modal-action-bar">' + likeBtn + followBtn + '</div>' +
+            '<h4 style="margin:14px 0 8px;">Comments</h4>' +
+            '<div>' + comments + '</div>' +
+            '<div style="display:flex; gap:8px; margin-top:10px;">' +
+                '<input type="text" id="modal-comment-input" ' +
+                'placeholder="Write a comment..." style="margin-bottom:0; flex:1;">' +
+                '<button onclick="submitModalComment(\'' + p._id + '\')" ' +
+                'style="padding:8px 14px; margin-bottom:0; font-size:0.85rem;">Post</button>' +
+            '</div>' +
+        '</div>';
+
+    document.getElementById('post-modal').style.display = 'block';
+}
+
+async function reopenPost(postId) {
+    await new Promise(r => setTimeout(r, 300));
+    openPost(postId);
+}
+
+async function submitModalComment(postId) {
+    const input = document.getElementById('modal-comment-input');
+    const text  = input.value.trim();
+    if (!text) return;
+
+    const res = await fetch('/posts/' + postId + '/comment', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ text })
+    });
+
+    if (res.ok) {
+        input.value = '';
+        await loadPosts();
+        openPost(postId);
+    }
+}
+
+function handleModalClick(event) {
+    if (event.target === document.getElementById('post-modal')) {
+        closeModal();
+    }
+}
+
+function closeModal() {
+    document.getElementById('post-modal').style.display = 'none';
+}
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+
+loadPosts();
+</script>
+
+</body>
+</html>

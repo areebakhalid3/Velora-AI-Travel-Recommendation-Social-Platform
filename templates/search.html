@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Velora — Search</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .search-header {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 10px rgba(18,33,46,0.06);
+        }
+
+        .search-header h2 { margin-bottom: 20px; }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            margin-bottom: 0;
+            font-size: 1rem;
+            padding: 13px 18px;
+        }
+
+        .search-bar button {
+            padding: 13px 28px;
+            margin-bottom: 0;
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            flex-shrink: 0;
+        }
+
+        .search-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .search-tab {
+            padding: 8px 20px;
+            background: var(--cream);
+            color: var(--navy);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            margin-bottom: 0;
+            transition: all 0.2s;
+        }
+
+        .search-tab.active {
+            background: var(--navy);
+            color: var(--cream);
+            border-color: var(--navy);
+        }
+
+        .search-tab:hover:not(.active) {
+            background: var(--teal);
+            color: var(--white);
+            border-color: var(--teal);
+        }
+
+        .result-label {
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+            margin-top: 24px;
+            font-weight: 600;
+        }
+
+        .result-label:first-child { margin-top: 0; }
+
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(18,33,46,0.05);
+        }
+
+        .post-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            cursor: pointer;
+        }
+
+        .post-card-body { padding: 18px 22px; }
+
+        .post-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .post-card h3:hover { color: var(--teal); }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--white);
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--teal);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-info { flex: 1; }
+        .user-info strong { color: var(--navy); font-size: 0.95rem; }
+        .user-info small  {
+            color: var(--muted);
+            font-size: 0.78rem;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .dest-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dest-card h4 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            color: var(--navy);
+            margin-bottom: 2px;
+        }
+
+        .dest-card small { color: var(--muted); font-size: 0.78rem; }
+
+        .depth-badge {
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .depth-1 { background: #e8f4f1; color: var(--teal); }
+        .depth-2 { background: #fef3e2; color: var(--orange); }
+
+        .score-badge {
+            font-size: 0.65rem;
+            background: var(--navy);
+            color: var(--cream);
+            padding: 4px 10px;
+            border-radius: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-right: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 56px 24px;
+            color: var(--muted);
+        }
+
+        .empty-state p {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+
+        #post-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(18,33,46,0.85);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        #modal-content {
+            background: white;
+            max-width: 680px;
+            margin: 48px auto;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #modal-content img { width: 100%; height: auto; display: block; }
+        .modal-info { padding: 24px 28px; }
+
+        .modal-info h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/home.html" class="nav-brand">Velora</a>
+        <div class="nav-motto">New sanctuaries await</div>
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">Feed</a>
+        <a href="/create_post.html">Share Trip</a>
+        <a href="/search.html">Search</a>
+        <a href="/budget.html">Budget</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/trip-planner.html">Plan Trip</a>
+        <a href="/map.html">Map</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="search-header">
+        <h2>Search</h2>
+        <div class="search-bar">
+            <input type="text" id="search-input"
+                placeholder="Search posts, people, destinations..."
+                onkeydown="if(event.key==='Enter') runSearch()" />
+            <button onclick="runSearch()">Search</button>
+        </div>
+        <div class="search-tabs">
+            <button class="search-tab active" onclick="setTab('all', this)">All</button>
+            <button class="search-tab" onclick="setTab('posts', this)">Posts</button>
+            <button class="search-tab" onclick="setTab('users', this)">People</button>
+            <button class="search-tab" onclick="setTab('destinations', this)">Destinations</button>
+            <button class="search-tab" onclick="setTab('connections', this)">My Connections</button>
+        </div>
+    </div>
+
+    <div id="results">
+        <div class="empty-state">
+            <p>Discover Velora</p>
+            <span>Search for posts, travelers, and destinations</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- Post Modal -->
+<div id="post-modal" onclick="handleModalClick(event)">
+    <div id="modal-content">
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+<script>
+let currentTab    = 'all';
+let currentUserId = null;
+let cachedPosts   = [];
+
+async function init() {
+    const res = await fetch('/me');
+    if (res.ok) {
+        const data    = await res.json();
+        currentUserId = data.user_id;
+    }
+}
+
+function setTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    const q = document.getElementById('search-input').value.trim();
+
+    if (tab === 'connections') { loadConnections(q); return; }
+    if (q) runSearch();
+}
+
+async function runSearch() {
+    const q   = document.getElementById('search-input').value.trim();
+    const div = document.getElementById('results');
+
+    if (!q && currentTab !== 'connections' && currentTab !== 'suggestions') {
+        div.innerHTML = '<div class="empty-state"><p>Enter a search term</p></div>';
+        return;
+    }
+
+    if (currentTab === 'connections') { loadConnections(q); return; }
+    if (currentTab === 'suggestions') { loadSuggestions(q); return; }
+
+    div.innerHTML = '<div class="empty-state"><p>Searching...</p></div>';
+
+    if (currentTab === 'all') {
+        const [posts, users, dests] = await Promise.all([
+            fetchJSON('/search/posts?q='              + enc(q)),
+            fetchJSON('/search/graph/users?q='        + enc(q)),
+            fetchJSON('/search/graph/destinations?q=' + enc(q))
+        ]);
+        cachedPosts = posts;
+        renderAll(posts, users, dests);
+
+    } else if (currentTab === 'posts') {
+        const posts = await fetchJSON('/search/posts?q=' + enc(q));
+        cachedPosts = posts;
+        renderSection('Posts', posts.map(p => postCard(p)));
+
+    } else if (currentTab === 'users') {
+        const users = await fetchJSON('/search/graph/users?q=' + enc(q));
+        renderSection('People',
+            users.map(u => userCard(u,
+                '<small>' + distanceLabel(u.social_distance) + '</small>'))
+        );
+
+    } else if (currentTab === 'destinations') {
+        const dests = await fetchJSON('/search/graph/destinations?q=' + enc(q));
+        renderSection('Destinations', dests.map(d => destCard(d)));
+    }
+}
+
+async function loadConnections(q = '') {
+    const url  = '/search/graph/connections' + (q ? '?q=' + enc(q) : '');
+    const data = await fetchJSON(url);
+    const div  = document.getElementById('results');
+    let html   = '';
+
+    if (data.mutual && data.mutual.length) {
+        html += '<p class="result-label">Mutual Connections (' +
+            data.mutual.length + ')</p>';
+        html += data.mutual.map(u =>
+            userCard(u, '<small>Follows you back</small>', true)
+        ).join('');
+    }
+
+    html += '<p class="result-label" style="margin-top:20px;">Following (' +
+        (data.following || []).length + ')</p>';
+    if (data.following && data.following.length) {
+        html += data.following.map(u =>
+            userCard(u, '<small>You follow them</small>', true)
+        ).join('');
+    } else {
+        html += '<p style="color:var(--muted); font-size:0.88rem; ' +
+            'margin-bottom:16px;">Not following anyone yet.</p>';
+    }
+
+    html += '<p class="result-label" style="margin-top:20px;">Followers (' +
+        (data.followers || []).length + ')</p>';
+    if (data.followers && data.followers.length) {
+        html += data.followers.map(u =>
+            userCard(u, '<small>Follows you</small>', false)
+        ).join('');
+    } else {
+        html += '<p style="color:var(--muted); font-size:0.88rem;">No followers yet.</p>';
+    }
+
+    div.innerHTML = html;
+}
+
+async function loadSuggestions(q = '') {
+    const url  = '/search/graph/suggestions' + (q ? '?q=' + enc(q) : '');
+    const data = await fetchJSON(url);
+    const div  = document.getElementById('results');
+
+    if (!data.length) {
+        div.innerHTML = '<div class="empty-state"><p>No suggestions yet</p>' +
+            '<span>Follow more people to get suggestions</span></div>';
+        return;
+    }
+
+    let html = '<p class="result-label">People you may know</p>';
+    html += data.map(u =>
+        userCard(u,
+            '<small>' + u.mutual_follows + ' mutual follows' +
+            (u.shared_places
+                ? ' · ' + u.shared_places + ' shared destinations' : '') +
+            '</small>',
+            false, u.score)
+    ).join('');
+
+    div.innerHTML = html;
+}
+
+// ── Helpers ───────────────────────────────────────────────
+
+async function fetchJSON(url) {
+    try {
+        const res = await fetch(url);
+        return res.ok ? await res.json() : [];
+    } catch(e) { return []; }
+}
+
+function enc(q) { return encodeURIComponent(q); }
+
+function distanceLabel(d) {
+    if (d === 1)  return 'Direct connection';
+    if (d === 2)  return 'Friend of friend';
+    if (d === 3)  return 'Extended network';
+    return 'Discovered in search';
+}
+
+function renderAll(posts, users, dests) {
+    const div = document.getElementById('results');
+    let html  = '';
+
+    if (!posts.length && !users.length && !dests.length) {
+        div.innerHTML = '<div class="empty-state"><p>No results found</p>' +
+            '<span>Try a different search term</span></div>';
+        return;
+    }
+
+    if (users.length) {
+        html += '<p class="result-label">People (' + users.length + ')</p>';
+        html += users.slice(0, 3).map(u =>
+            userCard(u, '<small>' + distanceLabel(u.social_distance) + '</small>')
+        ).join('');
+    }
+
+    if (dests.length) {
+        html += '<p class="result-label" style="margin-top:20px;">Destinations (' +
+            dests.length + ')</p>';
+        html += dests.slice(0, 4).map(d => destCard(d)).join('');
+    }
+
+    if (posts.length) {
+        html += '<p class="result-label" style="margin-top:20px;">Posts (' +
+            posts.length + ')</p>';
+        html += posts.slice(0, 5).map(p => postCard(p)).join('');
+    }
+
+    div.innerHTML = html;
+}
+
+function renderSection(label, cards) {
+    const div = document.getElementById('results');
+    if (!cards.length) {
+        div.innerHTML = '<div class="empty-state"><p>No results found</p></div>';
+        return;
+    }
+    div.innerHTML = '<p class="result-label">' + label + '</p>' + cards.join('');
+}
+
+// ── Card builders ─────────────────────────────────────────
+
+function postCard(p) {
+    const photo = p.photo_url
+        ? '<img src="' + p.photo_url + '" onclick="openPost(\'' + p._id + '\')">'
+        : '';
+    const budget = p.budget_breakdown && p.budget_breakdown.total
+        ? '<p class="budget">' + p.budget_breakdown.total + ' ' +
+          (p.budget_breakdown.currency || 'PKR') + '</p>'
+        : '';
+    const tags = (p.tags || []).map(t =>
+        '<span class="tag">#' + t + '</span>').join('');
+
+    return '<div class="post-card">' +
+        photo +
+        '<div class="post-card-body">' +
+            '<h3 onclick="openPost(\'' + p._id + '\')">' + (p.title || '') + '</h3>' +
+            '<p class="meta">by <strong>' + (p.author_username || '') + '</strong>' +
+            ' — 📍 ' +
+            (p.destination
+                ? p.destination.name + ', ' + p.destination.country : '') + '</p>' +
+            '<p style="margin-bottom:8px; color:var(--muted); font-size:0.88rem;">' +
+            (p.body || '').substring(0, 100) +
+            (p.body && p.body.length > 100 ? '...' : '') + '</p>' +
+            budget +
+            '<div class="tags">' + tags + '</div>' +
+        '</div>' +
+    '</div>';
+}
+
+function userCard(u, subtext = '', showUnfollow = false, score = null) {
+    const btn = showUnfollow
+        ? '<button onclick="unfollowUser(\'' + u.id + '\')" ' +
+          'style="background:#c53030; color:white; border:none; padding:7px 16px; ' +
+          'border-radius:6px; font-size:0.7rem; letter-spacing:1px; ' +
+          'text-transform:uppercase; cursor:pointer; font-family:Inter,sans-serif; ' +
+          'margin-bottom:0;">Unfollow</button>'
+        : u.id !== currentUserId
+        ? '<button onclick="followUser(\'' + u.id + '\')" ' +
+          'style="background:var(--teal); color:white; border:none; padding:7px 16px; ' +
+          'border-radius:6px; font-size:0.7rem; letter-spacing:1px; ' +
+          'text-transform:uppercase; cursor:pointer; font-family:Inter,sans-serif; ' +
+          'margin-bottom:0;">Follow</button>'
+        : '';
+
+    const scoreBadge = score !== null
+        ? '<span class="score-badge">Match ' + score + '</span>'
+        : '';
+
+    return '<div class="user-card">' +
+        '<div class="user-avatar">' + u.username.charAt(0).toUpperCase() + '</div>' +
+        '<div class="user-info">' +
+            '<strong>' + u.username + '</strong>' +
+            subtext +
+        '</div>' +
+        scoreBadge + btn +
+    '</div>';
+}
+
+function destCard(d) {
+    const badge = d.depth === 1
+        ? '<span class="depth-badge depth-1">Match</span>'
+        : '<span class="depth-badge depth-2">Related</span>';
+
+    return '<div class="dest-card">' +
+        '<div>' +
+            '<h4>' + (d.name || '') + '</h4>' +
+            '<small>' + (d.country || '') +
+            (d.discovered_via ? ' · via ' + d.discovered_via : '') + '</small>' +
+        '</div>' +
+        badge +
+    '</div>';
+}
+
+// ── Follow actions ────────────────────────────────────────
+
+async function followUser(targetId) {
+    const res  = await fetch('/follow/' + targetId, { method: 'POST' });
+    const data = await res.json();
+    alert(data.message || data.error);
+}
+
+async function unfollowUser(targetId) {
+    if (!confirm('Unfollow this person?')) return;
+    await fetch('/unfollow/' + targetId, { method: 'POST' });
+    loadConnections();
+}
+
+// ── Post modal ────────────────────────────────────────────
+
+function openPost(postId) {
+    const p = cachedPosts.find(x => x._id === postId);
+    if (!p) return;
+
+    const photo = p.photo_url ? '<img src="' + p.photo_url + '">' : '';
+    const budget = p.budget_breakdown && p.budget_breakdown.total
+        ? '<p class="budget">Budget: ' + p.budget_breakdown.total + ' ' +
+          (p.budget_breakdown.currency || 'PKR') + '</p>'
+        : '';
+    const tags = (p.tags || []).map(t =>
+        '<span class="tag">#' + t + '</span>').join('');
+    const comments = (p.comments || []).map(c =>
+        '<div class="comment"><strong>' + c.username +
+        ':</strong> ' + c.text + '</div>'
+    ).join('');
+
+    document.getElementById('modal-body').innerHTML =
+        photo +
+        '<div class="modal-info">' +
+            '<div style="display:flex; justify-content:space-between; ' +
+            'align-items:start; margin-bottom:8px;">' +
+                '<h2>' + (p.title || '') + '</h2>' +
+                '<button onclick="closeModal()" style="background:var(--navy); ' +
+                'color:var(--cream); border:none; padding:6px 14px; ' +
+                'border-radius:6px; cursor:pointer; font-size:0.78rem; ' +
+                'margin-bottom:0;">Close</button>' +
+            '</div>' +
+            '<p class="meta" style="margin-bottom:12px;">by <strong>' +
+            (p.author_username || '') + '</strong> — 📍 ' +
+            (p.destination
+                ? p.destination.name + ', ' + p.destination.country : '') + '</p>' +
+            '<p style="margin-bottom:12px; line-height:1.7;">' +
+            (p.body || '') + '</p>' +
+            budget +
+            '<div class="tags" style="margin:10px 0;">' + tags + '</div>' +
+            '<h4 style="margin:16px 0 8px; font-family:Cormorant Garamond,serif; ' +
+            'font-size:1.1rem; color:var(--navy);">Comments</h4>' +
+            '<div>' +
+            (comments ||
+                '<p style="color:var(--muted); font-size:0.85rem;">No comments yet.</p>'
+            ) +
+            '</div>' +
+        '</div>';
+
+    document.getElementById('post-modal').style.display = 'block';
+}
+
+function handleModalClick(e) {
+    if (e.target === document.getElementById('post-modal')) closeModal();
+}
+
+function closeModal() {
+    document.getElementById('post-modal').style.display = 'none';
+}
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+
+init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Velora — Route Map</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   
+    <style>                 
+        .map-wrapper {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 10px rgba(18,33,46,0.06);
+            margin-bottom: 24px;
+        }
+
+        .map-controls {
+            padding: 28px 32px;
+            background: var(--white);
+        }
+
+        .map-controls h2 { margin-bottom: 20px; }
+
+        .route-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .route-inputs .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .route-inputs label {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--navy);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .route-inputs input {
+            margin-bottom: 0;
+        }
+
+        .route-btn {
+            padding: 12px 24px;
+            margin-bottom: 0;
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            white-space: nowrap;
+        }
+
+        #map {
+            height: 520px;
+            width: 100%;
+        }
+
+        .route-info {
+            display: none;
+            padding: 20px 32px;
+            background: var(--cream);
+            border-top: 1px solid var(--border);
+            display: none;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .route-info.visible { display: flex; }
+
+        .route-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .route-stat-label {
+            font-size: 0.68rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .route-stat-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--navy);
+            line-height: 1;
+        }
+
+        .route-stat-unit {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+
+        .error-msg {
+            color: #c0392b;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .loading-msg {
+            color: var(--teal);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+            letter-spacing: 0.5px;
+        }
+
+        /* Popular routes */
+        .popular-section {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 28px 32px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 10px rgba(18,33,46,0.06);
+        }
+
+        .popular-section h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            color: var(--navy);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .route-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .route-chip {
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 18px;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            color: var(--navy);
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .route-chip:hover {
+            background: var(--teal);
+            color: var(--white);
+            border-color: var(--teal);
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/home.html" class="nav-brand">Velora</a>   
+        <div class="nav-motto">New sanctuaries await</div>      
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">Feed</a>
+        <a href="/create_post.html">Share Trip</a>
+        <a href="/search.html">Search</a>
+        <a href="/trip-planner.html">Plan Trip</a>
+        <a href="/map.html">Map</a>
+        <a href="/budget.html">Budget</a>
+        <a href="/profile.html">Profile</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="map-wrapper">
+        <div class="map-controls">
+            <h2>Route Planner</h2>
+            <div class="route-inputs">
+                <div class="form-group">
+                    <label>Starting Point</label>
+                    <input type="text" id="from-input"
+                        placeholder="e.g. Lahore" />
+                </div>
+                <div class="form-group">
+                    <label>Destination</label>
+                    <input type="text" id="to-input"
+                        placeholder="e.g. Hunza Valley"
+                        onkeydown="if(event.key==='Enter') getRoute()" />
+                </div>
+                <button class="route-btn" onclick="getRoute()">Show Route</button>
+            </div>
+            <p class="error-msg"  id="error-msg"></p>
+            <p class="loading-msg" id="loading-msg">Finding route...</p>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="route-info" id="route-info">
+            <div class="route-stat">
+                <div class="route-stat-label">Distance</div>
+                <div class="route-stat-value" id="stat-distance">—
+                    <span class="route-stat-unit">km</span>
+                </div>
+            </div>
+            <div class="route-stat">
+                <div class="route-stat-label">Est. Travel Time</div>
+                <div class="route-stat-value" id="stat-duration">—
+                    <span class="route-stat-unit">hrs</span>
+                </div>
+            </div>
+            <div class="route-stat">
+                <div class="route-stat-label">From</div>
+                <div class="route-stat-value" id="stat-from"
+                    style="font-size:1rem; margin-top:4px;">—</div>
+            </div>
+            <div class="route-stat">
+                <div class="route-stat-label">To</div>
+                <div class="route-stat-value" id="stat-to"
+                    style="font-size:1rem; margin-top:4px;">—</div>
+            </div>
+            <a href="/trip-planner.html" id="plan-link"
+                style="margin-left:auto; background:var(--teal); color:white;
+                padding:10px 22px; border-radius:8px; text-decoration:none;
+                font-size:0.75rem; letter-spacing:1.5px; text-transform:uppercase;
+                font-family:Inter,sans-serif; font-weight:500;">
+                Plan This Trip
+            </a>
+        </div>
+    </div>
+
+    <!-- Popular routes hardcoded -->    
+    <div class="popular-section">
+        <h3>Popular Routes</h3>
+        <div class="route-chips">
+            <div class="route-chip"
+                onclick="quickRoute('Lahore','Hunza Valley')">
+                Lahore → Hunza Valley
+            </div>
+            <div class="route-chip"
+                onclick="quickRoute('Islamabad','Skardu')">
+                Islamabad → Skardu
+            </div>
+            <div class="route-chip"
+                onclick="quickRoute('Lahore','Naran')">
+                Lahore → Naran
+            </div>
+            <div class="route-chip"
+                onclick="quickRoute('Karachi','Lahore')">
+                Karachi → Lahore
+            </div>
+            <div class="route-chip"
+                onclick="quickRoute('Islamabad','Murree')">
+                Islamabad → Murree
+            </div>
+            <div class="route-chip"
+                onclick="quickRoute('Lahore','Islamabad')">
+                Lahore → Islamabad
+            </div>
+            <div class="route-chip"
+                onclick="quickRoute('Karachi','Gwadar')">
+                Karachi → Gwadar
+            </div>
+            <div class="route-chip"
+                onclick="quickRoute('Islamabad','Fairy Meadows')">
+                Islamabad → Fairy Meadows
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+// Initialize map centered on Paxtannn
+const map = L.map('map').setView([30.3753, 69.3451], 5);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18
+}).addTo(map);
+
+let routeLayer  = null;
+let fromMarker  = null;
+let toMarker    = null;
+
+//Custom markers
+const fromIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:14px; height:14px; background:#307082; ' +
+          'border-radius:50%; border:3px solid white; ' +
+          'box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+});
+
+const toIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:14px; height:14px; background:#EA9940; ' +
+          'border-radius:50%; border:3px solid white; ' +
+          'box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+});
+
+async function geocode(place) {                               //Add Pakistan to search for better results
+    const query = place.toLowerCase().includes('pakistan')
+        ? place : place + ', Pakistan';
+    const url   = 'https://nominatim.openstreetmap.org/search?format=json&q=' +
+                  encodeURIComponent(query) + '&limit=1';
+    const res   = await fetch(url, {
+        headers: { 'Accept-Language': 'en' }
+    });
+    const data  = await res.json();
+    if (!data.length) throw new Error('Location not found: ' + place);
+    return {
+        lat:  parseFloat(data[0].lat),
+        lng:  parseFloat(data[0].lon),
+        name: data[0].display_name.split(',')[0]
+    };
+}
+
+async function getRoute() {
+    const fromVal = document.getElementById('from-input').value.trim();
+    const toVal   = document.getElementById('to-input').value.trim();
+    const errDiv  = document.getElementById('error-msg');
+    const loadDiv = document.getElementById('loading-msg');
+
+    errDiv.style.display  = 'none';
+    loadDiv.style.display = 'block';
+
+    if (!fromVal || !toVal) {
+        errDiv.textContent  = 'Please enter both starting point and destination.';
+        errDiv.style.display  = 'block';
+        loadDiv.style.display = 'none';
+        return;
+    }
+
+    try {                                                   // Geocode both locations
+        const [fromLoc, toLoc] = await Promise.all([
+            geocode(fromVal),
+            geocode(toVal)
+        ]);
+
+//Clearing prev layers
+        if (routeLayer) map.removeLayer(routeLayer);
+        if (fromMarker) map.removeLayer(fromMarker);
+        if (toMarker)   map.removeLayer(toMarker);
+
+    // markers
+        fromMarker = L.marker([fromLoc.lat, fromLoc.lng], { icon: fromIcon })
+            .addTo(map)
+            .bindPopup('<strong>' + fromLoc.name + '</strong><br>Starting point');
+
+        toMarker = L.marker([toLoc.lat, toLoc.lng], { icon: toIcon })
+            .addTo(map)
+            .bindPopup('<strong>' + toLoc.name + '</strong><br>Destination');
+
+    //Get routes from OSRM
+        const osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
+            fromLoc.lng + ',' + fromLoc.lat + ';' +
+            toLoc.lng   + ',' + toLoc.lat +
+            '?overview=full&geometries=geojson';
+
+        const routeRes  = await fetch(osrmUrl);
+        const routeData = await routeRes.json();
+
+        if (routeData.code !== 'Ok' || !routeData.routes.length) {
+            throw new Error('Could not find a driving route between these locations.');
+        }
+
+        const route    = routeData.routes[0];
+        const coords   = route.geometry.coordinates.map(c => [c[1], c[0]]);
+        const distance = (route.distance / 1000).toFixed(0);
+        const duration = (route.duration / 3600).toFixed(1);
+
+        routeLayer = L.polyline(coords, {               // Draw route line
+            color:  '#307082',
+            weight: 4,
+            opacity: 0.8
+        }).addTo(map);
+
+        const group = L.featureGroup([fromMarker, toMarker, routeLayer]);
+        map.fitBounds(group.getBounds().pad(0.1));
+
+        //stats
+        document.getElementById('stat-distance').innerHTML =
+            distance + ' <span class="route-stat-unit">km</span>';
+        document.getElementById('stat-duration').innerHTML =
+            duration + ' <span class="route-stat-unit">hrs</span>';
+        document.getElementById('stat-from').textContent = fromLoc.name;
+        document.getElementById('stat-to').textContent   = toLoc.name;
+
+        // for updating plan link
+        document.getElementById('plan-link').href =
+            '/trip-planner.html?from=' + encodeURIComponent(fromVal) +
+            '&to=' + encodeURIComponent(toVal);
+
+        document.getElementById('route-info').classList.add('visible');
+        loadDiv.style.display = 'none';
+
+    } catch(e) {
+        errDiv.textContent    = e.message || 'Could not find route. Try different city names.';     //exception handling
+        errDiv.style.display  = 'block';
+        loadDiv.style.display = 'none';
+    }
+}
+
+function quickRoute(from, to) {
+    document.getElementById('from-input').value = from;
+    document.getElementById('to-input').value   = to;
+    getRoute();
+}
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+</script>
+
+</body>
+</html>

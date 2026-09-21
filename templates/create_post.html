@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Share Trip — TravelShare</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/home.html" class="nav-brand">Velora</a>
+        <div class="nav-motto">New sanctuaries await</div>
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">Feed</a>
+        <a href="/create_post.html">Share Trip</a>
+        <a href="/budget.html">Budget</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/search.html">Search</a>
+        <a href="/trip-planner.html">Plan Trip</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Share Your Trip</h2>
+
+    <input  type="text"   id="title"       placeholder="Trip title e.g. Hunza Valley in 3 days" />
+    <input  type="text"   id="destination" placeholder="Destination e.g. Hunza Valley" />
+    <input  type="text"   id="country"     placeholder="Country e.g. Pakistan" />
+    <textarea             id="body"        placeholder="Tell us about your trip..."></textarea>
+    <input  type="number" id="budget"      placeholder="Total budget (PKR)" />
+    <input  type="text"   id="tags"        placeholder="Tags: mountains, budget, food" />
+
+    <label class="photo-label">
+        📷 Add a photo (optional)
+        <input type="file" id="photo" accept="image/*" onchange="previewPhoto(this)" />
+    </label>
+    <img id="preview" style="display:none; max-width:100%;
+         border-radius:8px; margin-bottom:14px;" />
+
+    <button onclick="createPost()">Post Trip</button>
+    <p id="msg" class="msg"></p>
+</div>
+
+<script>
+function previewPhoto(input) {
+    const preview = document.getElementById('preview');
+    if (input.files && input.files[0]) {
+        preview.src           = URL.createObjectURL(input.files[0]);
+        preview.style.display = 'block';
+    }
+}
+
+async function createPost() {
+    const title       = document.getElementById('title').value.trim();
+    const destination = document.getElementById('destination').value.trim();
+    const country     = document.getElementById('country').value.trim();
+    const body        = document.getElementById('body').value.trim();
+    const budget      = document.getElementById('budget').value;
+    const tagsRaw     = document.getElementById('tags').value;
+    const photoFile   = document.getElementById('photo').files[0];
+    const tags        = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
+
+    if (!title || !destination || !body) {
+        document.getElementById('msg').textContent = 'Please fill in title, destination and description.';
+        document.getElementById('msg').style.color = 'red';
+        return;
+    }
+
+    // If photo selected use FormData, otherwise use JSON
+    if (photoFile) {
+        const formData = new FormData();
+        formData.append('title',       title);
+        formData.append('destination', destination);
+        formData.append('country',     country);
+        formData.append('body',        body);
+        formData.append('budget',      budget);
+        formData.append('currency',    'PKR');
+        formData.append('tags',        tagsRaw);
+        formData.append('photo',       photoFile);
+
+        const res  = await fetch('/posts', { method: 'POST', body: formData });
+        const data = await res.json();
+        handleResponse(res.ok, data);
+    } else {
+        const res  = await fetch('/posts', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                title, destination, country, body,
+                budget, currency: 'PKR', tags
+            })
+        });
+        const data = await res.json();
+        handleResponse(res.ok, data);
+    }
+}
+
+function handleResponse(ok, data) {
+    const msg = document.getElementById('msg');
+    if (ok) {
+        msg.textContent = 'Trip posted successfully!';
+        msg.style.color = 'green';
+        setTimeout(() => window.location.href = '/index.html', 1500);
+    } else {
+        msg.textContent = data.error || 'Something went wrong.';
+        msg.style.color = 'red';
+    }
+}
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+</script>
+
+</body>
+</html>

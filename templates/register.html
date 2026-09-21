@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Velora — Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="auth-wrapper">
+    <div class="auth-box">
+        <div class="auth-logo">Velora</div>
+        <div class="auth-motto">New sanctuaries await</div>
+        <h3>Create Account</h3>
+        <label>Username</label>
+        <input type="text"     id="username" placeholder="your name" />
+        <label>Email</label>
+        <input type="email"    id="email"    placeholder="your@email.com" />
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" />
+        <button style="width:100%; margin-top:8px;" onclick="register()">Create Account</button>
+        <p id="msg" class="msg" style="text-align:center;"></p>
+        <p style="text-align:center; margin-top:16px; font-size:0.82rem; color:#6b7c8d;">
+            Already have an account?
+            <a href="/login.html" style="color:#307082; text-decoration:none;">Sign in</a>
+        </p>
+    </div>
+</div>
+<script>
+async function register() {
+    const username = document.getElementById('username').value;
+    const email    = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const res      = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+    });
+    const data = await res.json();
+    const msg  = document.getElementById('msg');
+    if (res.ok) {
+        msg.textContent = 'Account created. Redirecting...';
+        msg.style.color = '#307082';
+        setTimeout(() => window.location.href = '/login.html', 1500);
+    } else {
+        msg.textContent = data.error;
+        msg.style.color = '#c0392b';
+    }
+}
+</script>
+</body>
+</html>

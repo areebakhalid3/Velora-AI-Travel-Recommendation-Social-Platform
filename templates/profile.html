@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Velora — Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .profile-header {
+            background: var(--teal);
+            border-radius: 12px;
+            margin-bottom: 28px;
+            overflow: hidden;
+        }
+        .profile-header-inner {
+            display: flex;
+            align-items: center;
+            padding: 40px 48px;
+        }
+        .profile-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            border-right: 1px solid rgba(255,255,255,0.2);
+            padding-right: 48px;
+        }
+        .profile-right {
+            flex: 1;
+            display: flex;
+            justify-content: space-around;
+            padding-left: 48px;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: var(--cream);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+            border: 3px solid rgba(255,255,255,0.25);
+        }
+        .profile-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--cream);
+            letter-spacing: 1px;
+        }
+        .profile-handle {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.55);
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .stat-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--cream);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.55);
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+        }
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 28px;
+            background: transparent;
+            padding: 0;
+            box-shadow: none;
+            border-radius: 0;
+            gap: 0;
+        }
+        .tab {
+            flex: none;
+            padding: 12px 28px;
+            background: transparent;
+            color: var(--muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            border-radius: 0;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: var(--teal); }
+        .tab.active {
+            color: var(--teal);
+            border-bottom-color: var(--teal);
+            background: transparent;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Post card in profile */
+        .post-card {
+            background: var(--white);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 10px rgba(18,33,46,0.06);
+        }
+        .post-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .post-card-body { padding: 20px 24px; }
+        .post-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+        .post-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+        /* User card */
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--white);
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+        }
+        .user-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--teal);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .user-info { flex: 1; }
+        .user-info strong { font-size: 0.95rem; color: var(--navy); }
+        .user-info small  { color: var(--muted); font-size: 0.78rem; display: block; }
+        .small-btn {
+            padding: 7px 18px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 0;
+            transition: opacity 0.2s;
+        }
+        .small-btn:hover { opacity: 0.85; }
+        /* Budget card */
+        .budget-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 22px 26px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+        }
+        .budget-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            color: var(--navy);
+            margin-bottom: 10px;
+        }
+        .budget-total {
+            font-size: 0.85rem;
+            color: var(--teal);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .budget-card ul {
+            padding-left: 18px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        .budget-card li { margin-bottom: 4px; }
+        /* Edit modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(18,33,46,0.8);
+            z-index: 999;
+            overflow-y: auto;
+        }
+        .modal-box {
+            background: var(--white);
+            max-width: 580px;
+            margin: 60px auto;
+            padding: 36px;
+            border-radius: 12px;
+        }
+        .modal-box h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/home.html" class="nav-brand">Velora</a>
+        <div class="nav-motto">New sanctuaries await</div>
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">Feed</a>
+        <a href="/create_post.html">Share Trip</a>
+        <a href="/budget.html">Budget</a>
+        <a href="/search.html">Search</a>
+        <a href="/trip-planner.html">Plan Trip</a>
+        <a href="/map.html">Map</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-header-inner">
+            <div class="profile-left">
+                <div class="avatar" id="avatar-circle">?</div>
+                <div>
+                    <div class="profile-name" id="profile-username">Loading...</div>
+                    <div class="profile-handle" id="profile-handle"></div>
+                </div>
+            </div>
+            <div class="profile-right">
+                <div class="stat">
+                    <div class="stat-number" id="posts-count">0</div>
+                    <div class="stat-label">Posts</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="followers-count">0</div>
+                    <div class="stat-label">Followers</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="following-count">0</div>
+                    <div class="stat-label">Following</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('my-posts', this)">My Posts</button>
+        <button class="tab" onclick="showTab('following-tab', this)">Following</button>
+        <button class="tab" onclick="showTab('followers-tab', this)">Followers</button>
+        <button class="tab" onclick="showTab('budgets-tab', this)">Budgets</button>
+        <button class="tab" onclick="showTab('suggestions-tab', this)">Suggestions</button>
+    </div>
+
+    <!-- My Posts -->
+    <div id="my-posts" class="tab-content active">
+        <div id="my-posts-list"></div>
+    </div>
+
+    <!-- Following -->
+    <div id="following-tab" class="tab-content">
+        <div id="following-list"></div>
+    </div>
+
+    <!-- Followers -->
+    <div id="followers-tab" class="tab-content">
+        <div id="followers-list"></div>
+    </div>
+
+    <!-- Budgets -->
+    <div id="budgets-tab" class="tab-content">
+        <div id="budgets-list"></div>
+    </div>
+
+    <!-- Suggestions -->
+    <div id="suggestions-tab" class="tab-content">
+        <p style="color:var(--muted); margin-bottom:20px; font-size:0.88rem;
+            letter-spacing:0.3px;">
+            Places recommended based on your travel history
+        </p>
+        <div id="suggestions-list"></div>
+    </div>
+
+</div>
+
+<!-- Edit Post Modal -->
+<div id="edit-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Edit Post</h3>
+        <input  type="hidden" id="edit-id" />
+        <label>Title</label>
+        <input  type="text"   id="edit-title"       placeholder="Trip title" />
+        <label>Destination</label>
+        <input  type="text"   id="edit-destination" placeholder="Destination" />
+        <label>Country</label>
+        <input  type="text"   id="edit-country"     placeholder="Country" />
+        <label>Description</label>
+        <textarea             id="edit-body"         placeholder="Description"
+            style="height:100px;"></textarea>
+        <label>Budget (PKR)</label>
+        <input  type="number" id="edit-budget"       placeholder="Total budget" />
+        <label>Tags</label>
+        <input  type="text"   id="edit-tags"         placeholder="mountains, food, budget" />
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button onclick="saveEdit()">Save Changes</button>
+            <button onclick="closeEditModal()"
+                style="background:#718096;">Cancel</button>
+        </div>
+        <p id="edit-msg" style="margin-top:8px; font-size:0.85rem;"></p>
+    </div>
+</div>
+
+<script>
+let currentUserId   = null;
+let currentUsername = null;
+
+async function loadProfile() {
+    const res = await fetch('/me');
+    if (!res.ok) {
+        window.location.href = '/login.html';
+        return;
+    }
+    const data      = await res.json();
+    currentUserId   = data.user_id;
+    currentUsername = data.username;
+
+    document.getElementById('profile-username').textContent = data.username;
+    document.getElementById('profile-handle').textContent   = '@' + data.username.toLowerCase().replace(' ', '');
+    document.getElementById('avatar-circle').textContent    =
+        data.username.charAt(0).toUpperCase();
+
+    const statsRes = await fetch('/profile/stats');
+    const stats    = await statsRes.json();
+    document.getElementById('posts-count').textContent     = stats.posts_count     || 0;
+    document.getElementById('followers-count').textContent = stats.followers_count || 0;
+    document.getElementById('following-count').textContent = stats.following_count || 0;
+
+    loadMyPosts();
+}
+
+function showTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(name).classList.add('active');
+    btn.classList.add('active');
+
+    if (name === 'my-posts')        loadMyPosts();
+    if (name === 'following-tab')   loadFollowing();
+    if (name === 'followers-tab')   loadFollowers();
+    if (name === 'budgets-tab')     loadBudgets();
+    if (name === 'suggestions-tab') loadSuggestions();
+}
+
+async function loadMyPosts() {
+    const res   = await fetch('/profile/posts');
+    const posts = await res.json();
+    const div   = document.getElementById('my-posts-list');
+
+    if (!posts.length) {
+        div.innerHTML = '<p style="color:var(--muted);">No posts yet.</p>';
+        return;
+    }
+
+    div.innerHTML = posts.map(p => {
+        const photo = p.photo_url
+            ? '<img src="' + p.photo_url + '">' : '';
+        const budget = p.budget_breakdown && p.budget_breakdown.total
+            ? '<p class="budget">' + p.budget_breakdown.total + ' PKR</p>' : '';
+        const tags = (p.tags || []).map(t =>
+            '<span class="tag">#' + t + '</span>').join('');
+
+        return '<div class="post-card">' +
+            photo +
+            '<div class="post-card-body">' +
+                '<h3>' + (p.title || '') + '</h3>' +
+                '<p class="meta">📍 ' +
+                (p.destination ? p.destination.name + ', ' + p.destination.country : '') +
+                '</p>' +
+                '<p style="margin-bottom:10px;">' + (p.body || '') + '</p>' +
+                budget +
+                '<div class="tags">' + tags + '</div>' +
+                '<div class="post-actions">' +
+                    '<button class="small-btn" style="background:var(--teal);" ' +
+                    'onclick=\'openEdit(' + JSON.stringify(p) + ')\'>Edit</button>' +
+                    '<button class="small-btn" style="background:#c53030;" ' +
+                    'onclick="deletePost(\'' + p._id + '\')">Delete</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+async function loadFollowing() {
+    const res  = await fetch('/following');
+    const data = await res.json();
+    const div  = document.getElementById('following-list');
+
+    if (!data.length) {
+        div.innerHTML = '<p style="color:var(--muted);">Not following anyone yet.</p>';
+        return;
+    }
+
+    div.innerHTML = data.map(u =>
+        '<div class="user-card">' +
+            '<div class="user-avatar">' + u.username.charAt(0).toUpperCase() + '</div>' +
+            '<div class="user-info"><strong>' + u.username + '</strong></div>' +
+            '<button class="small-btn" style="background:#c53030;" ' +
+            'onclick="unfollow(\'' + u.id + '\')">Unfollow</button>' +
+        '</div>'
+    ).join('');
+}
+
+async function loadFollowers() {
+    const res  = await fetch('/followers');
+    const data = await res.json();
+    const div  = document.getElementById('followers-list');
+
+    if (!data.length) {
+        div.innerHTML = '<p style="color:var(--muted);">No followers yet.</p>';
+        return;
+    }
+
+    div.innerHTML = data.map(u =>
+        '<div class="user-card">' +
+            '<div class="user-avatar">' + u.username.charAt(0).toUpperCase() + '</div>' +
+            '<div class="user-info"><strong>' + u.username + '</strong></div>' +
+        '</div>'
+    ).join('');
+}
+
+async function loadBudgets() {
+    const res  = await fetch('/budget');
+    const data = await res.json();
+    const div  = document.getElementById('budgets-list');
+
+    if (!data.length) {
+        div.innerHTML = '<p style="color:var(--muted);">No budgets saved yet.</p>';
+        return;
+    }
+
+    div.innerHTML = data.map(b =>
+        '<div class="budget-card">' +
+            '<h3>' + (b.destination || 'Unknown') + '</h3>' +
+            '<p class="budget-total">Total: ' + b.total + ' ' + (b.currency || 'PKR') + '</p>' +
+            '<ul>' +
+            (b.items || []).map(i =>
+                '<li>' + i.category + ': ' + i.amount + ' PKR</li>'
+            ).join('') +
+            '</ul>' +
+        '</div>'
+    ).join('');
+}
+
+async function loadSuggestions() {
+    const res  = await fetch('/suggestions/places');
+    const data = await res.json();
+    const div  = document.getElementById('suggestions-list');
+
+    if (!data.length) {
+        div.innerHTML = '<p style="color:var(--muted);">No place recommendations yet. ' +
+            'Start sharing trips to get personalized suggestions.</p>';
+        return;
+    }
+
+    div.innerHTML = data.map(p =>
+        '<div class="budget-card">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                '<div>' +
+                    '<h3 style="margin-bottom:4px;">' + (p.name || 'Unknown') + '</h3>' +
+                    '<p style="color:var(--muted); font-size:0.82rem; letter-spacing:0.5px;">' +
+                    (p.country || '') +
+                    (p.category ? ' · ' + p.category : '') + '</p>' +
+                '</div>' +
+                (p.score > 0
+                    ? '<span style="background:var(--cream); color:var(--teal); ' +
+                      'padding:4px 12px; border-radius:12px; font-size:0.72rem; ' +
+                      'letter-spacing:1px; text-transform:uppercase; font-weight:600;">' +
+                      p.score + ' travelers</span>'
+                    : '<span style="background:var(--cream); color:var(--muted); ' +
+                      'padding:4px 12px; border-radius:12px; font-size:0.72rem; ' +
+                      'letter-spacing:1px; text-transform:uppercase;">Explore</span>'
+                ) +
+            '</div>' +
+        '</div>'
+    ).join('');
+}
+
+async function followUser(targetId) {
+    const res  = await fetch('/follow/' + targetId, { method: 'POST' });
+    const data = await res.json();
+    alert(data.message || data.error);
+    loadSuggestions();
+    loadProfile();
+}
+
+async function unfollow(targetId) {
+    if (!confirm('Unfollow this person?')) return;
+    await fetch('/unfollow/' + targetId, { method: 'POST' });
+    loadFollowing();
+    loadProfile();
+}
+
+function openEdit(post) {
+    document.getElementById('edit-id').value          = post._id;
+    document.getElementById('edit-title').value       = post.title || '';
+    document.getElementById('edit-destination').value = post.destination?.name || '';
+    document.getElementById('edit-country').value     = post.destination?.country || '';
+    document.getElementById('edit-body').value        = post.body || '';
+    document.getElementById('edit-budget').value      = post.budget_breakdown?.total || '';
+    document.getElementById('edit-tags').value        = (post.tags || []).join(', ');
+    document.getElementById('edit-modal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+}
+
+async function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+
+    const res  = await fetch('/posts/' + id, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title:       document.getElementById('edit-title').value,
+            destination: document.getElementById('edit-destination').value,
+            country:     document.getElementById('edit-country').value,
+            body:        document.getElementById('edit-body').value,
+            budget:      document.getElementById('edit-budget').value,
+            currency:    'PKR',
+            tags:        document.getElementById('edit-tags').value
+                             .split(',').map(t => t.trim()).filter(t => t)
+        })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+        closeEditModal();
+        loadMyPosts();
+        loadProfile();
+    } else {
+        document.getElementById('edit-msg').textContent = data.error;
+        document.getElementById('edit-msg').style.color = '#c0392b';
+    }
+}
+
+async function deletePost(id) {
+    if (!confirm('Delete this post?')) return;
+    const res  = await fetch('/posts/' + id, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+        loadMyPosts();
+        loadProfile();
+    } else {
+        alert(data.error);
+    }
+}
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+
+loadProfile();
+</script>
+
+</body>
+</html>

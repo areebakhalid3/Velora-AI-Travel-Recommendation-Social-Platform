@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Budget — TravelShare</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/home.html" class="nav-brand">Velora</a>
+        <div class="nav-motto">New sanctuaries await</div>
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">Feed</a>
+        <a href="/create_post.html">Share Trip</a>
+        <a href="/budget.html">Budget</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/search.html">Search</a>
+        <a href="/trip-planner.html">Plan Trip</a>
+        <a href="/map.html">Map</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Trip Budget Planner</h2>
+
+    <input type="text"   id="destination" placeholder="Destination" />
+    <input type="number" id="transport"   placeholder="Transport cost (PKR)" />
+    <input type="number" id="food"        placeholder="Food cost (PKR)" />
+    <input type="number" id="stay"        placeholder="Stay cost (PKR)" />
+    <input type="number" id="misc"        placeholder="Misc cost (PKR)" />
+
+    <button onclick="saveBudget()">Save Budget</button>
+    <p id="msg" class="msg"></p>
+
+    <h2>My Budgets</h2>
+    <div id="budgets"></div>
+</div>
+
+<script>
+async function saveBudget() {
+    const destination = document.getElementById('destination').value;
+    const transport   = parseFloat(document.getElementById('transport').value) || 0;
+    const food        = parseFloat(document.getElementById('food').value) || 0;
+    const stay        = parseFloat(document.getElementById('stay').value) || 0;
+    const misc        = parseFloat(document.getElementById('misc').value) || 0;
+    const total       = transport + food + stay + misc;
+
+    const res  = await fetch('/budget', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            destination, total, currency: 'PKR',
+            items: [
+                { category: 'transport', amount: transport },
+                { category: 'food',      amount: food },
+                { category: 'stay',      amount: stay },
+                { category: 'misc',      amount: misc }
+            ]
+        })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+        document.getElementById('msg').textContent = 'Budget saved!';
+        document.getElementById('msg').style.color = 'green';
+        loadBudgets();
+    } else {
+        document.getElementById('msg').textContent = data.error;
+        document.getElementById('msg').style.color = 'red';
+    }
+}
+
+async function loadBudgets() {
+    const res  = await fetch('/budget');
+    const data = await res.json();
+    const div  = document.getElementById('budgets');
+
+    if (!data.length) {
+        div.innerHTML = '<p>No budgets saved yet.</p>';
+        return;
+    }
+
+    div.innerHTML = data.map(b => `
+        <div class="post-card">
+            <h3>📍 ${b.destination}</h3>
+            <p>Total: <strong>${b.total} ${b.currency}</strong></p>
+            <ul>
+                ${(b.items || []).map(i =>
+                    `<li>${i.category}: ${i.amount} PKR</li>`
+                ).join('')}
+            </ul>
+        </div>
+    `).join('');
+}
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+
+loadBudgets();
+</script>
+
+</body>
+</html>

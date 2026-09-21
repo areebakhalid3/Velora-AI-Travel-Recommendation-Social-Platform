@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Velora — Explore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { margin: 0; overflow: hidden; background: #12212E; }
+
+        .hero {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.2s ease-in-out;
+        }
+
+        .slide.active { opacity: 1; }
+
+        .slide-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(18,33,46,0.3) 0%,
+                rgba(18,33,46,0.15) 40%,
+                rgba(18,33,46,0.7) 100%
+            );
+        }
+
+        /* Nav over hero */
+        .hero-nav {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 10px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            background: rgba(18,33,46,0.5);
+        }
+
+        .hero-nav .nav-brand { font-size: 3rem; font-weight: 700; }
+
+        .hero-nav a {
+            color: #ECE7DC;
+            text-decoration: none;
+            font-size: 1rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .hero-nav a:hover { color: #EA9940; }
+        .nav-links { display: flex; gap: 28px; }
+
+        /* Bottom info */
+        .slide-info {
+            position: absolute;
+            bottom: 60px;
+            left: 60px;
+            z-index: 10;
+            color: #ECE7DC;
+        }
+
+        .slide-location {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.5rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .slide-country {
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(236,231,220,0.7);
+            margin-bottom: 28px;
+        }
+
+        .explore-btn {
+            background: #EA9940;
+            color: #12212E;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 0;
+        }
+
+        .explore-btn:hover { background: #d4872e; }
+
+        /* Dots */
+        .dots {
+            position: absolute;
+            bottom: 30px;
+            right: 60px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(236,231,220,0.3);
+            cursor: pointer;
+            transition: background 0.3s;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dot.active { background: #EA9940; }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+
+    <!-- Slides -->
+    <div class="slide active" id="slide-0"
+        style="background-image: url('/static/uploads/damanekoh.jpg')">
+    <div class="slide-overlay"></div>
+    </div>
+    <div class="slide" id="slide-1"
+        style="background-image: url('/static/uploads/badshahi2.jpg')">
+        <div class="slide-overlay"></div>
+    </div>
+    <div class="slide" id="slide-2"
+        style="background-image: url('/static/uploads/derawar_fort.jpg')">
+        <div class="slide-overlay"></div>
+    </div>
+    <div class="slide" id="slide-3"
+        style="background-image: url('/static/uploads/saifulmaluk.jpg')">
+        <div class="slide-overlay"></div>
+    </div>
+
+    <!-- Nav -->
+    <div class="hero-nav">
+        <div>
+            <div class="nav-brand">Velora</div>
+            <div class="nav-motto">New sanctuaries await</div>
+        </div>
+        <div class="nav-links">
+            <a href="/index.html">Feed</a>
+            <a href="/create_post.html">Share Trip</a>
+            <a href="/budget.html">Budget</a>
+            <a href="/profile.html">Profile</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </div>
+
+    <!-- Slide info -->
+    <div class="slide-info">
+        <div class="slide-location" id="slide-name">Hunza Valley</div>
+        <div class="slide-country" id="slide-country">Pakistan</div>
+        <button class="explore-btn" onclick="window.location.href='/index.html'">
+            Explore Destinations
+        </button>
+    </div>
+
+    <!-- Dots -->
+    <div class="dots" id="dots"></div>
+
+</div>
+
+<script>
+const destinations = [
+    { name: "Daman-e-Koh",    country: "Islamabad, Pakistan" },
+    { name: "Badshahi Mosque", country: "Lahore, Pakistan"   },
+    { name: "Derawar Fort",    country: "Punjab, Pakistan"   },
+    { name: "Lake Saiful Maluk", country: "KPK, Pakistan"   }
+];
+
+let current = 0;
+const total  = destinations.length;
+
+// Build dots
+const dotsDiv = document.getElementById('dots');
+destinations.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick   = () => goTo(i);
+    dotsDiv.appendChild(d);
+});
+
+function goTo(index) {
+    document.getElementById('slide-' + current).classList.remove('active');
+    document.querySelectorAll('.dot')[current].classList.remove('active');
+    current = index;
+    document.getElementById('slide-' + current).classList.add('active');
+    document.querySelectorAll('.dot')[current].classList.add('active');
+    document.getElementById('slide-name').textContent    = destinations[current].name;
+    document.getElementById('slide-country').textContent = destinations[current].country;
+}
+
+// Auto advance every 4 seconds
+setInterval(() => goTo((current + 1) % total), 4000);
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+</script>
+</body>
+</html>

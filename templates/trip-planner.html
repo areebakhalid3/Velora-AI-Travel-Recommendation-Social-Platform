@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Velora — Trip Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .planner-hero {
+            background: var(--navy);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 28px;
+            color: var(--cream);
+        }
+
+        .planner-hero h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--cream);
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .planner-hero p {
+            color: rgba(236,231,220,0.6);
+            font-size: 0.88rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 0;
+        }
+
+        .planner-form {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 32px;
+            border: 1px solid var(--border);
+            margin-bottom: 28px;
+            box-shadow: 0 2px 10px rgba(18,33,46,0.06);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-grid .full-width { grid-column: 1 / -1; }
+
+        .form-group { display: flex; flex-direction: column; }
+
+        .form-group label {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--navy);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            margin-bottom: 0;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            background: var(--teal);
+        }
+
+        .generate-btn:hover { background: var(--navy); }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px;
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--teal);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading p {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .loading small { color: var(--muted); font-size: 0.82rem; }
+
+        /* Result sections */
+        .result-container { display: none; }
+
+        .result-header {
+            background: var(--teal);
+            border-radius: 12px;
+            padding: 32px 36px;
+            margin-bottom: 20px;
+            color: var(--cream);
+        }
+
+        .result-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--cream);
+            margin-bottom: 8px;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .result-meta span {
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            color: rgba(236,231,220,0.8);
+            text-transform: uppercase;
+        }
+
+        .weather-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .weather-good { background: rgba(108,163,162,0.3); color: var(--cream); }
+        .weather-bad  { background: rgba(234,153,64,0.3);  color: var(--cream); }
+
+        .section-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(18,33,46,0.05);
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.5px;
+        }
+
+        /* Budget bars */
+        .budget-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .budget-item {
+            background: var(--cream);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .budget-item-label {
+            font-size: 0.7rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .budget-item-amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--navy);
+        }
+
+        .budget-item-amount span {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+
+        /* Day cards */
+        .day-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+
+        .day-header {
+            background: var(--navy);
+            color: var(--cream);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .day-cost {
+            font-size: 0.75rem;
+            color: rgba(236,231,220,0.7);
+            letter-spacing: 1px;
+        }
+
+        .day-body { padding: 16px 20px; }
+
+        .time-block {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 12px;
+            align-items: start;
+        }
+
+        .time-label {
+            font-size: 0.65rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--teal);
+            font-weight: 600;
+            min-width: 70px;
+            margin-top: 2px;
+        }
+
+        .time-content {
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .stay-note {
+            background: var(--cream);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Route options */
+        .route-option {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .route-mode {
+            font-weight: 600;
+            color: var(--navy);
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .route-desc { font-size: 0.82rem; color: var(--muted); }
+
+        .route-cost {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--teal);
+            text-align: right;
+        }
+
+        .route-cost small {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--muted);
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+
+        /* Food items */
+        .food-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0ede8;
+        }
+
+        .food-item:last-child { border-bottom: none; }
+        .food-name { font-weight: 500; color: var(--navy); font-size: 0.9rem; }
+        .food-where { font-size: 0.78rem; color: var(--muted); }
+        .food-price { font-family: 'Cormorant Garamond', serif;
+                      font-size: 1.1rem; color: var(--teal); font-weight: 600; }
+
+        /* Packing list */
+        .pack-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .pack-category {
+            background: var(--cream);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .pack-category-title {
+            font-size: 0.7rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--teal);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .pack-item {
+            font-size: 0.83rem;
+            color: var(--text);
+            padding: 3px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pack-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--teal);
+            flex-shrink: 0;
+        }
+
+        /* Safety */
+        .safety-item {
+            padding: 10px 14px;
+            background: #fff8f0;
+            border-left: 3px solid var(--orange);
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        /* Accommodation */
+        .hotel-item {
+            padding: 14px 0;
+            border-bottom: 1px solid #f0ede8;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .hotel-item:last-child { border-bottom: none; }
+        .hotel-name { font-weight: 600; color: var(--navy); font-size: 0.9rem; }
+        .hotel-type { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+        .hotel-price {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            color: var(--teal);
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .hotel-price small {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--muted);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Save button */
+        .save-btn {
+            background: var(--orange);
+            width: 100%;
+            padding: 14px;
+            font-size: 0.82rem;
+            letter-spacing: 2px;
+            margin-top: 8px;
+        }
+
+        .save-btn:hover { background: #d4872e; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/home.html" class="nav-brand">Velora</a>
+        <div class="nav-motto">New sanctuaries await</div>
+    </div>
+    <div class="nav-links">
+        <a href="/index.html">Feed</a>
+        <a href="/create_post.html">Share Trip</a>
+        <a href="/search.html">Search</a>
+        <a href="/trip-planner.html">Plan Trip</a>
+        <a href="/budget.html">Budget</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/map.html">Map</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="planner-hero">
+        <h2>Trip Planner</h2>
+        <p>Get a complete personalized trip plan with real weather, routes, and prices</p>
+    </div>
+
+    <div class="planner-form">
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label>Destination</label>
+                <input type="text" id="destination"
+                    placeholder="e.g. Hunza Valley, Skardu, Naran" />
+            </div>
+            <div class="form-group">
+                <label>Departing From</label>
+                <input type="text" id="from-city"
+                    placeholder="e.g. Lahore, Karachi" />
+            </div>
+            <div class="form-group">
+                <label>Travel Month</label>
+                <select id="month">
+                    <option value="">Select month</option>
+                    <option>January</option>
+                    <option>February</option>
+                    <option>March</option>
+                    <option>April</option>
+                    <option>May</option>
+                    <option>June</option>
+                    <option>July</option>
+                    <option>August</option>
+                    <option>September</option>
+                    <option>October</option>
+                    <option>November</option>
+                    <option>December</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Number of Days</label>
+                <input type="number" id="days"
+                    placeholder="3" min="1" max="30" value="3" />
+            </div>
+            <div class="form-group">
+                <label>Total Budget (PKR)</label>
+                <input type="number" id="budget"
+                    placeholder="15000" value="15000" />
+            </div>
+            <div class="form-group full-width">
+                <label>Interests</label>
+                <input type="text" id="interests"
+                    placeholder="e.g. trekking, photography, local food, history" />
+            </div>
+        </div>
+        <button class="generate-btn" onclick="generatePlan()">
+            Generate Trip Plan
+        </button>
+    </div>
+
+    <div class="loading" id="loading">      <!-- waiting for response -->
+        <div class="loading-spinner"></div>
+        <p>Planning your trip...</p>
+        <small>Checking weather, routes, and prices for your destination</small>
+    </div>
+
+    <div class="result-container" id="result-container">
+        <div class="result-header" id="result-header"></div>
+
+        <!-- Route sect -->
+        <div class="section-card">
+            <div class="section-title">Getting There</div>
+            <div id="result-route"></div>
+        </div>
+
+        <!-- Budget  Section-->
+        <div class="section-card">
+            <div class="section-title">Budget Breakdown</div>
+            <div id="result-budget"></div>
+        </div>
+
+        <!-- Itinerary (plan)-->
+        <div class="section-card">
+            <div class="section-title">Day by Day Itinerary</div>
+            <div id="result-itinerary"></div>
+        </div>
+
+        <!-- Accommodation/stay -->
+        <div class="section-card">
+            <div class="section-title">Where to Stay</div>
+            <div id="result-accommodation"></div>
+        </div>
+
+        <!--Food -->
+        <div class="section-card">
+            <div class="section-title">What to Eat</div>
+            <div id="result-food"></div>
+        </div>
+
+        <!-- Packing(necessary) -->
+        <div class="section-card">
+            <div class="section-title">Packing List</div>
+            <div id="result-packing"></div>
+        </div>
+
+        <!-- Safety Precautions -->
+        <div class="section-card">
+            <div class="section-title">Safety & Tips</div>
+            <div id="result-safety"></div>
+        </div>
+
+        <button class="save-btn" onclick="saveToBudget()">
+            Save Budget to My Plans
+        </button>
+    </div>
+</div>
+
+<script>
+let currentPlan = null;
+
+async function generatePlan() {
+    const destination = document.getElementById('destination').value.trim();
+    const fromCity    = document.getElementById('from-city').value.trim();
+    const month       = document.getElementById('month').value;
+    const days        = document.getElementById('days').value;
+    const budget      = document.getElementById('budget').value;
+    const interests   = document.getElementById('interests').value.trim();
+
+    if (!destination || !month || !fromCity) {
+        alert('Please fill in destination, departing city and travel month.');
+        return;
+    }
+
+    // Show loading
+    document.getElementById('loading').style.display          = 'block';
+    document.getElementById('result-container').style.display = 'none';
+    document.querySelector('.planner-form').style.opacity     = '0.5';
+
+    try {
+        const res  = await fetch('/ai/trip-plan', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                destination, from_city: fromCity,
+                month, days, budget, interests
+            })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+
+        currentPlan = data;
+        renderPlan(data);
+
+    } catch(e) {
+        alert('Something went wrong. Please try again.');
+    } finally {
+        document.getElementById('loading').style.display      = 'none';
+        document.querySelector('.planner-form').style.opacity = '1';
+    }
+}
+
+function renderPlan(p) {
+    // Header
+    const weatherClass = p.weather_suitable ? 'weather-good' : 'weather-bad';
+    const weatherText  = p.weather_suitable ? 'Good time to visit' : 'Consider alternatives';
+    document.getElementById('result-header').innerHTML =
+        '<h2>' + p.destination + '</h2>' +
+        '<div class="result-meta">' +
+            '<span>' + p.duration + '</span>' +
+            '<span>' + p.travel_month + '</span>' +
+            '<span>From ' + p.from_city + '</span>' +
+        '</div>' +
+        '<span class="weather-badge ' + weatherClass + '">' +
+        weatherText + '</span>' +
+        '<p style="margin-top:12px; color:rgba(236,231,220,0.8); font-size:0.88rem;">' +
+        (p.weather_summary || '') + '</p>' +
+        (p.best_months && p.best_months.length
+            ? '<p style="margin-top:6px; color:rgba(236,231,220,0.6); font-size:0.78rem; ' +
+              'letter-spacing:0.5px;">Best months: ' + p.best_months.join(', ') + '</p>'
+            : '');
+
+    // Route
+    const route = p.route || {};
+    let routeHtml = '';
+    (route.options || []).forEach(r => {
+        routeHtml +=
+            '<div class="route-option">' +
+                '<div>' +
+                    '<div class="route-mode">' + r.mode + '</div>' +
+                    '<div class="route-desc">' + r.description +
+                    ' · ' + r.duration + '</div>' +
+                '</div>' +
+                '<div class="route-cost">' +
+                    (r.cost_pkr ? r.cost_pkr.toLocaleString() + ' PKR' : 'Varies') +
+                    '<small>per person</small>' +
+                '</div>' +
+            '</div>';
+    });
+    if (route.recommended) {
+        routeHtml += '<p style="font-size:0.82rem; color:var(--teal); margin-top:8px; ' +
+            'font-weight:600; letter-spacing:0.5px;">Recommended: ' +
+            route.recommended + '</p>';
+    }
+    document.getElementById('result-route').innerHTML = routeHtml;
+
+    // Budget
+    const b = p.budget_breakdown || {};
+    document.getElementById('result-budget').innerHTML =
+        '<div class="budget-grid">' +
+            budgetItem('Transport',     b.transport) +
+            budgetItem('Accommodation', b.accommodation) +
+            budgetItem('Food',          b.food) +
+            budgetItem('Activities',    b.activities) +
+            budgetItem('Miscellaneous', b.misc) +
+            budgetItem('Total',         b.total, true) +
+        '</div>' +
+        (b.notes
+            ? '<p style="font-size:0.82rem; color:var(--muted); margin-top:4px;">' +
+              b.notes + '</p>'
+            : '');
+
+    // Itinerary
+    let itinHtml = '';
+    (p.itinerary || []).forEach(day => {
+        itinHtml +=
+            '<div class="day-card">' +
+                '<div class="day-header">' +
+                    '<span class="day-number">Day ' + day.day +
+                    (day.title ? ' — ' + day.title : '') + '</span>' +
+                    (day.estimated_cost
+                        ? '<span class="day-cost">' +
+                          day.estimated_cost.toLocaleString() + ' PKR</span>'
+                        : '') +
+                '</div>' +
+                '<div class="day-body">' +
+                    timeBlock('Morning',   day.morning) +
+                    timeBlock('Afternoon', day.afternoon) +
+                    timeBlock('Evening',   day.evening) +
+                    (day.accommodation
+                        ? '<div class="stay-note">Stay: ' + day.accommodation + '</div>'
+                        : '') +
+                '</div>' +
+            '</div>';
+    });
+    document.getElementById('result-itinerary').innerHTML = itinHtml;
+
+    // Accommodation
+    let accomHtml = '';
+    (p.accommodation || []).forEach(h => {
+        accomHtml +=
+            '<div class="hotel-item">' +
+                '<div>' +
+                    '<div class="hotel-name">' + h.name + '</div>' +
+                    '<div class="hotel-type">' + h.type +
+                    (h.rating ? ' · ' + h.rating : '') + '</div>' +
+                    (h.notes
+                        ? '<div style="font-size:0.78rem; color:var(--muted); ' +
+                          'margin-top:3px;">' + h.notes + '</div>'
+                        : '') +
+                '</div>' +
+                '<div class="hotel-price">' +
+                    (h.price_per_night_pkr
+                        ? h.price_per_night_pkr.toLocaleString() + ' PKR'
+                        : 'Varies') +
+                    '<small>per night</small>' +
+                '</div>' +
+            '</div>';
+    });
+    document.getElementById('result-accommodation').innerHTML = accomHtml;
+
+    // Food
+    let foodHtml = '';
+    (p.food || []).forEach(f => {
+        foodHtml +=
+            '<div class="food-item">' +
+                '<div>' +
+                    '<div class="food-name">' + f.dish + '</div>' +
+                    '<div class="food-where">' + f.where + '</div>' +
+                '</div>' +
+                '<div class="food-price">' +
+                    (f.price_pkr ? f.price_pkr.toLocaleString() + ' PKR' : '') +
+                '</div>' +
+            '</div>';
+    });
+    document.getElementById('result-food').innerHTML = foodHtml;
+
+    // Packing
+    const pack = p.packing_list || {};
+    document.getElementById('result-packing').innerHTML =
+        '<div class="pack-grid">' +
+            packCategory('Clothing',   pack.clothing) +
+            packCategory('Gear',       pack.gear) +
+            packCategory('Documents',  pack.documents) +
+            packCategory('Medicines',  pack.medicines) +
+        '</div>';
+
+    // Safety
+    let safetyHtml = '';
+    (p.safety_tips || []).forEach(tip => {
+        safetyHtml += '<div class="safety-item">' + tip + '</div>';
+    });
+    if (p.permits_required && p.permits_required.length) {
+        safetyHtml += '<div style="margin-top:14px; font-size:0.72rem; ' +
+            'letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); ' +
+            'font-weight:600; margin-bottom:8px;">Permits Required</div>';
+        p.permits_required.forEach(permit => {
+            safetyHtml += '<div class="safety-item" ' +
+                'style="border-left-color:var(--teal);">' + permit + '</div>';
+        });
+    }
+    if (p.emergency_contacts) {
+        const ec = p.emergency_contacts;
+        safetyHtml += '<div style="margin-top:14px; font-size:0.72rem; ' +
+            'letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); ' +
+            'font-weight:600; margin-bottom:8px;">Emergency Contacts</div>' +
+            '<div style="display:flex; gap:16px; flex-wrap:wrap;">' +
+            (ec.rescue  ? contactChip('Rescue',  ec.rescue)  : '') +
+            (ec.police  ? contactChip('Police',  ec.police)  : '') +
+            (ec.hospital? contactChip('Hospital',ec.hospital): '') +
+            '</div>';
+    }
+    document.getElementById('result-safety').innerHTML = safetyHtml;
+
+    // Show results
+    document.getElementById('result-container').style.display = 'block';
+    document.getElementById('result-container').scrollIntoView(
+        { behavior: 'smooth' }
+    );
+}
+
+// ── Helper renderers ──────────────────────────────────────
+
+function budgetItem(label, amount, isTotal = false) {
+    return '<div class="budget-item" ' +
+        (isTotal ? 'style="background:var(--navy); grid-column:1/-1;"' : '') + '>' +
+        '<div class="budget-item-label" ' +
+        (isTotal ? 'style="color:rgba(236,231,220,0.6);"' : '') + '>' +
+        label + '</div>' +
+        '<div class="budget-item-amount" ' +
+        (isTotal ? 'style="color:var(--cream);"' : '') + '>' +
+        (amount ? Number(amount).toLocaleString() : '—') +
+        ' <span>' + (isTotal ? '' : 'PKR') + '</span>' +
+        '</div>' +
+        '</div>';
+}
+
+function timeBlock(label, content) {
+    if (!content) return '';
+    return '<div class="time-block">' +
+        '<div class="time-label">' + label + '</div>' +
+        '<div class="time-content">' + content + '</div>' +
+        '</div>';
+}
+
+function packCategory(title, items) {
+    if (!items || !items.length) return '';
+    return '<div class="pack-category">' +
+        '<div class="pack-category-title">' + title + '</div>' +
+        items.map(i =>
+            '<div class="pack-item">' +
+            '<div class="pack-dot"></div>' + i + '</div>'
+        ).join('') +
+        '</div>';
+}
+
+function contactChip(label, value) {
+    return '<div style="background:var(--cream); border-radius:6px; ' +
+        'padding:8px 14px; font-size:0.8rem;">' +
+        '<div style="font-size:0.65rem; letter-spacing:1px; ' +
+        'text-transform:uppercase; color:var(--muted); margin-bottom:2px;">' +
+        label + '</div>' +
+        '<strong style="color:var(--navy);">' + value + '</strong>' +
+        '</div>';
+}
+
+async function saveToBudget() {
+    if (!currentPlan) return;
+    const b = currentPlan.budget_breakdown || {};
+
+    const res  = await fetch('/budget', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+            destination: currentPlan.destination,
+            total:       b.total,
+            currency:    'PKR',
+            items: [
+                { category: 'transport',      amount: b.transport      || 0 },
+                { category: 'accommodation',  amount: b.accommodation  || 0 },
+                { category: 'food',           amount: b.food           || 0 },
+                { category: 'activities',     amount: b.activities     || 0 },
+                { category: 'misc',           amount: b.misc           || 0 }
+            ]
+        })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+        alert('Budget saved to your plans!');
+    } else {
+        alert(data.error || 'Could not save budget.');
+    }
+}
+
+async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+}
+</script>
+
+</body>
+</html>
